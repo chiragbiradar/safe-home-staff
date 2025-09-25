@@ -51,6 +51,8 @@ export default function SearchWorkers() {
   const [address, setAddress] = useState<string>("");
   const [specialInstructions, setSpecialInstructions] = useState<string>("");
 
+  const [profileOpen, setProfileOpen] = useState(false);
+
   const createBooking = useMutation(api.bookings.createBooking);
 
   const workers = useQuery(api.workers.searchWorkers, {
@@ -60,6 +62,11 @@ export default function SearchWorkers() {
     minRating,
     maxRate,
   });
+
+  const reviews = useQuery(
+    api.workers.getWorkerReviews,
+    selectedWorker?._id ? { workerId: selectedWorker._id } : "skip"
+  );
 
   if (isLoading) {
     return (
@@ -345,7 +352,8 @@ export default function SearchWorkers() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            toast("Worker profile is coming soon.");
+                            setSelectedWorker(worker);
+                            setProfileOpen(true);
                           }}
                         >
                           View Profile
@@ -446,6 +454,152 @@ export default function SearchWorkers() {
             </Button>
             <Button onClick={handleConfirmBooking}>
               Confirm Booking
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Worker Profile</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-semibold">{selectedWorker?.name}</h3>
+                <div className="flex items-center text-sm text-gray-600 mt-1">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  <span>{selectedWorker?.city}</span>
+                </div>
+              </div>
+              <div className="text-right">
+                {selectedWorker?.averageRating && (
+                  <div className="inline-flex items-center space-x-1 bg-green-50 px-2 py-1 rounded">
+                    <Star className="h-4 w-4 fill-green-500 text-green-500" />
+                    <span className="text-sm font-medium text-green-700">
+                      {selectedWorker.averageRating}
+                    </span>
+                  </div>
+                )}
+                {typeof selectedWorker?.totalReviews === "number" && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {selectedWorker.totalReviews} reviews
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Meta */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+              <div className="flex items-center space-x-2">
+                <Clock className="h-4 w-4 text-gray-500" />
+                <span>{selectedWorker?.experience} years experience</span>
+              </div>
+              <div className="font-semibold text-gray-900">
+                ₹{selectedWorker?.hourlyRate}/hour
+              </div>
+              {selectedWorker?.phone && (
+                <a
+                  href={`tel:${selectedWorker.phone}`}
+                  className="inline-flex items-center text-blue-600 hover:underline"
+                >
+                  <Phone className="h-4 w-4 mr-1" />
+                  Call
+                </a>
+              )}
+            </div>
+
+            {/* Categories */}
+            <div>
+              <div className="text-sm font-medium mb-2">Services</div>
+              <div className="flex flex-wrap gap-1">
+                {selectedWorker?.categories?.map((cat: string) => (
+                  <Badge key={cat} variant="secondary" className="text-xs">
+                    {SERVICE_CATEGORIES.find((c) => c.value === cat)?.label || cat}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Languages */}
+            {selectedWorker?.languages?.length ? (
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Languages: </span>
+                {selectedWorker.languages.join(", ")}
+              </div>
+            ) : null}
+
+            {/* Verification */}
+            {selectedWorker?.verificationStatus && (
+              <div className="text-sm">
+                <span className="font-medium">Verification: </span>
+                <span className="capitalize">
+                  {String(selectedWorker.verificationStatus).replace("_", " ")}
+                </span>
+              </div>
+            )}
+
+            {/* Reviews */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-semibold">Reviews</h4>
+                {!reviews && (
+                  <span className="text-xs text-gray-500">Loading...</span>
+                )}
+              </div>
+              {!reviews || reviews.length === 0 ? (
+                <div className="text-sm text-gray-500">
+                  {reviews ? "No reviews yet." : "Loading reviews..."}
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-60 overflow-auto pr-1">
+                  {reviews.map((r) => (
+                    <div key={r._id} className="border rounded p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          {[...Array(Math.round(r.rating || 0))].map((_, i) => (
+                            <Star
+                              key={i}
+                              className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {r.customerName || "Anonymous"}
+                        </span>
+                      </div>
+                      {r.comment && (
+                        <p className="text-sm text-gray-700 mt-2">{r.comment}</p>
+                      )}
+                      <div className="text-xs text-gray-500 mt-2">
+                        SQ: {r.serviceQuality} • Punctuality: {r.punctuality} • Professionalism: {r.professionalism}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4 flex gap-2">
+            <Button variant="outline" onClick={() => setProfileOpen(false)}>
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                setProfileOpen(false);
+                if (!selectedWorker) {
+                  toast("No worker selected.");
+                  return;
+                }
+                setServiceCategory(selectedWorker.categories?.[0] || "");
+                setBookingOpen(true);
+              }}
+            >
+              Book This Worker
             </Button>
           </DialogFooter>
         </DialogContent>
