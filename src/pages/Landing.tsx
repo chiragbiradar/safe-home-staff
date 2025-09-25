@@ -18,6 +18,7 @@ import {
   Zap
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 const services = [
   {
@@ -192,7 +193,7 @@ export default function Landing() {
                   variant="outline" 
                   size="lg" 
                   className="text-lg px-8 py-6"
-                  onClick={() => navigate("/become-worker")}
+                  onClick={() => toast("Become a Worker flow is coming soon.")}
                 >
                   Become a Worker
                 </Button>
@@ -502,7 +503,7 @@ export default function Landing() {
                 size="lg" 
                 variant="outline"
                 className="text-lg px-8 py-6 border-white text-white hover:bg-white hover:text-blue-600"
-                onClick={() => navigate("/become-worker")}
+                onClick={() => toast("Become a Worker flow is coming soon.")}
               >
                 Become a Worker
               </Button>
