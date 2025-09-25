@@ -5,12 +5,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { motion } from "framer-motion";
 import { Search, Star, MapPin, Clock, Phone, Filter, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const SERVICE_CATEGORIES = [
   { value: "cleaning", label: "House Cleaning" },
@@ -34,6 +41,17 @@ export default function SearchWorkers() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [minRating, setMinRating] = useState<number | undefined>();
   const [maxRate, setMaxRate] = useState<number | undefined>();
+  // Booking modal state
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [selectedWorker, setSelectedWorker] = useState<any>(null);
+  const [serviceCategory, setServiceCategory] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("");
+  const [duration, setDuration] = useState<number>(2);
+  const [address, setAddress] = useState<string>("");
+  const [specialInstructions, setSpecialInstructions] = useState<string>("");
+
+  const createBooking = useMutation(api.bookings.createBooking);
 
   const workers = useQuery(api.workers.searchWorkers, {
     searchTerm: searchTerm || undefined,
@@ -56,9 +74,51 @@ export default function SearchWorkers() {
     return null;
   }
 
-  const handleBookWorker = (workerId: string) => {
-    // Show a toast and stay on the current page (no redirect)
-    toast("Booking flow is coming soon.");
+  const handleBookWorker = (worker: any) => {
+    setSelectedWorker(worker);
+    setServiceCategory(worker.categories?.[0] || "");
+    setBookingOpen(true);
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!selectedWorker) {
+      toast("No worker selected.");
+      return;
+    }
+    if (!serviceCategory) {
+      toast("Please select a service.");
+      return;
+    }
+    if (!startDate || !startTime) {
+      toast("Please choose date and time.");
+      return;
+    }
+    if (!address.trim()) {
+      toast("Please enter an address.");
+      return;
+    }
+    try {
+      await createBooking({
+        workerId: selectedWorker._id,
+        serviceCategory,
+        startDate,
+        startTime,
+        duration: Number(duration) || 1,
+        address,
+        specialInstructions: specialInstructions || undefined,
+      });
+      toast("Booking created successfully!");
+      setBookingOpen(false);
+      // reset form
+      setStartDate("");
+      setStartTime("");
+      setDuration(2);
+      setAddress("");
+      setSpecialInstructions("");
+      navigate("/dashboard");
+    } catch (e: any) {
+      toast(e?.message || "Failed to create booking.");
+    }
   };
 
   return (
@@ -277,7 +337,7 @@ export default function SearchWorkers() {
                       <div className="flex space-x-2 pt-2">
                         <Button
                           className="flex-1"
-                          onClick={() => handleBookWorker(worker._id)}
+                          onClick={() => handleBookWorker(worker)}
                         >
                           Book Now
                         </Button>
@@ -299,6 +359,97 @@ export default function SearchWorkers() {
           )}
         </motion.div>
       </div>
+
+      <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Book {selectedWorker?.name}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Service */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Service</label>
+              <Select
+                value={serviceCategory}
+                onValueChange={(v) => setServiceCategory(v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedWorker?.categories?.map((cat: string) => (
+                    <SelectItem key={cat} value={cat}>
+                      {SERVICE_CATEGORIES.find((c) => c.value === cat)?.label || cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date & Time */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Date</label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Time</label>
+                <Input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Duration (hours)</label>
+              <Input
+                type="number"
+                min={1}
+                step={1}
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+              />
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Address</label>
+              <Input
+                placeholder="Flat/House, Area, City, Pincode"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </div>
+
+            {/* Special Instructions */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Special Instructions (optional)</label>
+              <Input
+                placeholder="Any notes for the worker..."
+                value={specialInstructions}
+                onChange={(e) => setSpecialInstructions(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4 flex gap-2">
+            <Button variant="outline" onClick={() => setBookingOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmBooking}>
+              Confirm Booking
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
