@@ -57,9 +57,8 @@ export default function SearchWorkers() {
   }
 
   const handleBookWorker = (workerId: string) => {
-    // Show a toast and redirect to a known route to avoid 404
-    toast("Booking flow coming soon. Redirecting to your Dashboard.");
-    navigate("/dashboard");
+    // Show a toast and stay on the current page (no redirect)
+    toast("Booking flow is coming soon.");
   };
 
   return (
@@ -286,8 +285,7 @@ export default function SearchWorkers() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            toast("Worker profile coming soon. Redirecting to your Dashboard.");
-                            navigate("/dashboard");
+                            toast("Worker profile is coming soon.");
                           }}
                         >
                           View Profile
