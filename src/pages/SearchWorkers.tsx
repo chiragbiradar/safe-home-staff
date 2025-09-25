@@ -107,12 +107,15 @@ export default function SearchWorkers() {
             </div>
 
             {/* City Filter */}
-            <Select value={selectedCity} onValueChange={setSelectedCity}>
+            <Select
+              value={selectedCity}
+              onValueChange={(value) => setSelectedCity(value === "ALL" ? "" : value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select City" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Cities</SelectItem>
+                <SelectItem value="ALL">All Cities</SelectItem>
                 {CITIES.map((city) => (
                   <SelectItem key={city} value={city}>
                     {city}
@@ -122,12 +125,15 @@ export default function SearchWorkers() {
             </Select>
 
             {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) => setSelectedCategory(value === "ALL" ? "" : value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Service Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Services</SelectItem>
+                <SelectItem value="ALL">All Services</SelectItem>
                 {SERVICE_CATEGORIES.map((category) => (
                   <SelectItem key={category.value} value={category.value}>
                     {category.label}
@@ -137,12 +143,15 @@ export default function SearchWorkers() {
             </Select>
 
             {/* Rating Filter */}
-            <Select value={minRating?.toString() || ""} onValueChange={(value) => setMinRating(value ? Number(value) : undefined)}>
+            <Select
+              value={minRating?.toString() || ""}
+              onValueChange={(value) => setMinRating(value === "ANY" ? undefined : Number(value))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Min Rating" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any Rating</SelectItem>
+                <SelectItem value="ANY">Any Rating</SelectItem>
                 <SelectItem value="4">4+ Stars</SelectItem>
                 <SelectItem value="4.5">4.5+ Stars</SelectItem>
               </SelectContent>
