@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { Search, Star, MapPin, Clock, Phone, Filter, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 const SERVICE_CATEGORIES = [
   { value: "cleaning", label: "House Cleaning" },
@@ -56,7 +57,9 @@ export default function SearchWorkers() {
   }
 
   const handleBookWorker = (workerId: string) => {
-    navigate(`/book/${workerId}`);
+    // Show a toast and redirect to a known route to avoid 404
+    toast("Booking flow coming soon. Redirecting to your Dashboard.");
+    navigate("/dashboard");
   };
 
   return (
@@ -282,7 +285,10 @@ export default function SearchWorkers() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/worker/${worker._id}`)}
+                          onClick={() => {
+                            toast("Worker profile coming soon. Redirecting to your Dashboard.");
+                            navigate("/dashboard");
+                          }}
                         >
                           View Profile
                         </Button>
