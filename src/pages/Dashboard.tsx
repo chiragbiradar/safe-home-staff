@@ -7,6 +7,7 @@ import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import { Calendar, Clock, MapPin, Star, User, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
@@ -105,14 +106,22 @@ export default function Dashboard() {
             </CardHeader>
           </Card>
           
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/become-worker")}>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => toast("Become a Worker flow is coming soon.")}
+          >
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Become a Worker</CardTitle>
               <CardDescription>Join our platform as a service provider</CardDescription>
             </CardHeader>
           </Card>
           
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => {
+              window.location.href = "tel:+919876543210";
+            }}
+          >
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Emergency Support</CardTitle>
               <CardDescription>24/7 customer support available</CardDescription>
@@ -193,13 +202,27 @@ export default function Dashboard() {
                         
                         <div className="flex space-x-2">
                           {booking.worker?.phone && (
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (booking.worker?.phone) {
+                                  window.location.href = `tel:${booking.worker.phone}`;
+                                } else {
+                                  toast("Worker phone not available.");
+                                }
+                              }}
+                            >
                               <Phone className="h-4 w-4 mr-1" />
                               Contact
                             </Button>
                           )}
                           {booking.status === "completed" && (
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toast("Review flow is coming soon.")}
+                            >
                               <Star className="h-4 w-4 mr-1" />
                               Review
                             </Button>
