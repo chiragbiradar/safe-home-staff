@@ -6,15 +6,45 @@ import { Infer, v } from "convex/values";
 export const ROLES = {
   ADMIN: "admin",
   USER: "user",
-  MEMBER: "member",
+  WORKER: "worker",
 } as const;
 
 export const roleValidator = v.union(
   v.literal(ROLES.ADMIN),
   v.literal(ROLES.USER),
-  v.literal(ROLES.MEMBER),
+  v.literal(ROLES.WORKER),
 );
 export type Role = Infer<typeof roleValidator>;
+
+export const SERVICE_CATEGORIES = {
+  CLEANING: "cleaning",
+  COOKING: "cooking",
+  CHILDCARE: "childcare",
+  ELDERLY_CARE: "elderly_care",
+  DRIVING: "driving",
+  PET_CARE: "pet_care",
+} as const;
+
+export const serviceCategoryValidator = v.union(
+  v.literal(SERVICE_CATEGORIES.CLEANING),
+  v.literal(SERVICE_CATEGORIES.COOKING),
+  v.literal(SERVICE_CATEGORIES.CHILDCARE),
+  v.literal(SERVICE_CATEGORIES.ELDERLY_CARE),
+  v.literal(SERVICE_CATEGORIES.DRIVING),
+  v.literal(SERVICE_CATEGORIES.PET_CARE),
+);
+
+export const VERIFICATION_STATUS = {
+  PENDING: "pending",
+  VERIFIED: "verified",
+  REJECTED: "rejected",
+} as const;
+
+export const verificationStatusValidator = v.union(
+  v.literal(VERIFICATION_STATUS.PENDING),
+  v.literal(VERIFICATION_STATUS.VERIFIED),
+  v.literal(VERIFICATION_STATUS.REJECTED),
+);
 
 const schema = defineSchema(
   {
@@ -30,14 +60,118 @@ const schema = defineSchema(
       isAnonymous: v.optional(v.boolean()), // is the user anonymous. do not remove
 
       role: v.optional(roleValidator), // role of the user. do not remove
+      phone: v.optional(v.string()),
+      address: v.optional(v.string()),
+      city: v.optional(v.string()),
+      pincode: v.optional(v.string()),
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
+    // Workers table for domestic help providers
+    workers: defineTable({
+      userId: v.id("users"),
+      name: v.string(),
+      phone: v.string(),
+      email: v.optional(v.string()),
+      age: v.number(),
+      gender: v.string(),
+      address: v.string(),
+      city: v.string(),
+      pincode: v.string(),
+      profileImage: v.optional(v.string()),
+      
+      // Service details
+      categories: v.array(serviceCategoryValidator),
+      experience: v.number(), // years of experience
+      hourlyRate: v.number(),
+      availability: v.array(v.string()), // days of week
+      languages: v.array(v.string()),
+      
+      // Verification details
+      verificationStatus: verificationStatusValidator,
+      governmentId: v.string(),
+      policeVerification: v.optional(v.string()),
+      references: v.array(v.object({
+        name: v.string(),
+        phone: v.string(),
+        relationship: v.string(),
+      })),
+      
+      // Ratings and reviews
+      averageRating: v.optional(v.number()),
+      totalReviews: v.optional(v.number()),
+      
+      isActive: v.boolean(),
+    })
+      .index("by_city", ["city"])
+      .index("by_category", ["categories"])
+      .index("by_verification", ["verificationStatus"])
+      .index("by_user", ["userId"]),
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // Bookings table
+    bookings: defineTable({
+      customerId: v.id("users"),
+      workerId: v.id("workers"),
+      serviceCategory: serviceCategoryValidator,
+      startDate: v.string(),
+      endDate: v.optional(v.string()),
+      startTime: v.string(),
+      duration: v.number(), // hours
+      totalAmount: v.number(),
+      status: v.union(
+        v.literal("pending"),
+        v.literal("confirmed"),
+        v.literal("in_progress"),
+        v.literal("completed"),
+        v.literal("cancelled")
+      ),
+      specialInstructions: v.optional(v.string()),
+      address: v.string(),
+      paymentStatus: v.union(
+        v.literal("pending"),
+        v.literal("paid"),
+        v.literal("refunded")
+      ),
+    })
+      .index("by_customer", ["customerId"])
+      .index("by_worker", ["workerId"])
+      .index("by_status", ["status"]),
+
+    // Reviews table
+    reviews: defineTable({
+      bookingId: v.id("bookings"),
+      customerId: v.id("users"),
+      workerId: v.id("workers"),
+      rating: v.number(), // 1-5
+      comment: v.optional(v.string()),
+      serviceQuality: v.number(),
+      punctuality: v.number(),
+      professionalism: v.number(),
+    })
+      .index("by_worker", ["workerId"])
+      .index("by_customer", ["customerId"])
+      .index("by_booking", ["bookingId"]),
+
+    // Service requests from customers
+    serviceRequests: defineTable({
+      customerId: v.id("users"),
+      serviceCategory: serviceCategoryValidator,
+      description: v.string(),
+      preferredDate: v.string(),
+      preferredTime: v.string(),
+      duration: v.number(),
+      budget: v.number(),
+      address: v.string(),
+      city: v.string(),
+      pincode: v.string(),
+      status: v.union(
+        v.literal("open"),
+        v.literal("matched"),
+        v.literal("closed")
+      ),
+    })
+      .index("by_customer", ["customerId"])
+      .index("by_category", ["serviceCategory"])
+      .index("by_status", ["status"]),
   },
   {
     schemaValidation: false,
