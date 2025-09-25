@@ -8,11 +8,14 @@ import { motion } from "framer-motion";
 import { Calendar, Clock, MapPin, Star, User, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import BecomeWorkerDialog from "@/components/BecomeWorkerDialog";
+import { useState } from "react";
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const bookings = useQuery(api.bookings.getUserBookings);
+  const [becomeOpen, setBecomeOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -108,7 +111,7 @@ export default function Dashboard() {
           
           <Card
             className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => toast("Become a Worker flow is coming soon.")}
+            onClick={() => setBecomeOpen(true)}
           >
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Become a Worker</CardTitle>
@@ -237,6 +240,15 @@ export default function Dashboard() {
           </Card>
         </motion.div>
       </div>
+
+      <BecomeWorkerDialog
+        open={becomeOpen}
+        onOpenChange={setBecomeOpen}
+        onSuccess={() => {
+          toast("Worker profile created!");
+          // Optionally refresh bookings or navigate if needed
+        }}
+      />
     </div>
   );
 }

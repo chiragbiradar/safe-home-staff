@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import BecomeWorkerDialog from "@/components/BecomeWorkerDialog";
+import { useState } from "react";
 
 const services = [
   {
@@ -109,6 +111,7 @@ const testimonials = [
 export default function Landing() {
   const { isLoading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const [becomeOpen, setBecomeOpen] = useState(false);
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
@@ -193,7 +196,7 @@ export default function Landing() {
                   variant="outline" 
                   size="lg" 
                   className="text-lg px-8 py-6"
-                  onClick={() => toast("Become a Worker flow is coming soon.")}
+                  onClick={() => { if (isAuthenticated) { setBecomeOpen(true); } else { navigate("/auth"); } }}
                 >
                   Become a Worker
                 </Button>
@@ -503,7 +506,7 @@ export default function Landing() {
                 size="lg" 
                 variant="outline"
                 className="text-lg px-8 py-6 border-white text-white hover:bg-white hover:text-blue-600"
-                onClick={() => toast("Become a Worker flow is coming soon.")}
+                onClick={() => { if (isAuthenticated) { setBecomeOpen(true); } else { navigate("/auth"); } }}
               >
                 Become a Worker
               </Button>
@@ -568,6 +571,15 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      <BecomeWorkerDialog
+        open={becomeOpen}
+        onOpenChange={setBecomeOpen}
+        onSuccess={() => {
+          toast("Profile submitted. Redirecting to Dashboard...");
+          navigate("/dashboard");
+        }}
+      />
     </div>
   );
 }
